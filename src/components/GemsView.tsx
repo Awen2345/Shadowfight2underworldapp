@@ -1,12 +1,22 @@
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
-import { Gem, CheckCircle, AlertCircle, Plus, ArrowRight, Sparkles } from 'lucide-react';
-import { getInventoryItem } from '../lib/inventoryData';
+import { Gem, CheckCircle, AlertCircle, Plus, ArrowRight, Sparkles, Loader2 } from 'lucide-react';
+import { useInventory } from '../lib/hooks/useInventory';
 
 export function GemsView() {
-  const unverifiedGems = getInventoryItem('unverified-gems');
-  const verifiedGems = getInventoryItem('verified-gems');
+  const { getItemQuantity, loading } = useInventory();
+  
+  const unverifiedGems = getItemQuantity('unverified-gems');
+  const verifiedGems = getItemQuantity('verified-gems');
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[400px]">
+        <Loader2 className="size-8 animate-spin text-amber-500" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

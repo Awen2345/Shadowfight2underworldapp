@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
-import { Trophy, Medal, Award } from 'lucide-react';
-import { mockPlayers } from '../lib/mockData';
+import { Trophy, Medal, Award, Loader2 } from 'lucide-react';
 import { PlayerStatsModal } from './PlayerStatsModal';
 import type { Player } from '../lib/mockData';
+import { useLeaderboard } from '../lib/hooks/useLeaderboard';
 
 export function PlayerLeaderboard() {
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+  const { players, loading, error } = useLeaderboard(100);
 
   const getRewardIcon = (rank: number) => {
     if (rank === 1) return <Trophy className="size-5 text-amber-400" />;
@@ -22,6 +23,46 @@ export function PlayerLeaderboard() {
     if (rank === 3) return <Badge className="bg-amber-700 text-white">Normal Chest</Badge>;
     return null;
   };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[400px]">
+        <Loader2 className="size-8 animate-spin text-amber-500" />
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <Card className="bg-red-900/20 border-red-500/30 p-6">
+        <p className="text-red-400 text-center">Failed to load leaderboard. Using cached data.</p>
+      </Card>
+    );
+  }
+
+  // Convert API data to Player format
+  const convertedPlayers: Player[] = players.map((apiPlayer, index) => ({
+    id: apiPlayer.id,
+    username: apiPlayer.username,
+    rating: apiPlayer.rating,
+    clan: apiPlayer.clan_name || undefined,
+    clanTag: apiPlayer.clan_tag || undefined,
+    bestRatingPerSeason: apiPlayer.best_rating || apiPlayer.rating,
+    avgDamagePerRound: Math.floor(parseFloat(apiPlayer.avg_damage_per_round || '0')),
+    totalRaids: apiPlayer.total_raids || 0,
+    victoriousRaids: apiPlayer.total_victories || 0,
+    firstPlaces: apiPlayer.first_place_finishes || 0,
+    lastPresence: apiPlayer.last_presence || 'Unknown',
+    equipment: {
+      weapon: 'Unknown',
+      armor: 'Unknown',
+      helm: 'Unknown'
+    },
+    medals: [],
+    seasonBanner: index < 10 ? 'gold' : index < 100 ? 'silver' : undefined
+  }));
 
   return (
     <>
@@ -55,7 +96,7 @@ export function PlayerLeaderboard() {
         </Card>
 
         {/* Player List */}
-        {mockPlayers.map((player, index) => {
+        {convertedPlayers.map((player, index) => {
           const rank = index + 1;
           return (
             <Card

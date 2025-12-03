@@ -6,8 +6,9 @@ import { RaidBattleScreen } from './RaidBattleScreen';
 import { ResultScreen } from './ResultScreen';
 import { VictoryResultScreen } from './VictoryResultScreen';
 import { RewardScreen } from './RewardScreen';
-import { updatePlayerStats, calculateRatingGain } from '../lib/playerStatsData';
-import { incrementRaidsToday } from '../lib/playerEquipment';
+import { calculateRatingGain } from '../lib/playerStatsData';
+import { useGameContext } from '../lib/context/GameContext';
+import type { RaidResult } from '../lib/playerStatsData';
 
 type RaidPhase = 'matchmaking' | 'lobby' | 'battle' | 'result' | 'victory' | 'reward' | 'defeat';
 
@@ -20,6 +21,7 @@ interface RaidOrchestratorProps {
 export function RaidOrchestrator({ boss, onRaidComplete, onCancel }: RaidOrchestratorProps) {
   const [phase, setPhase] = useState<RaidPhase>('matchmaking');
   const [players, setPlayers] = useState<RaidPlayer[]>([]);
+  const { updateAfterRaid } = useGameContext();
   
   // Boss state
   const [currentBossShield, setCurrentBossShield] = useState(boss.shield);
@@ -104,7 +106,7 @@ export function RaidOrchestrator({ boss, onRaidComplete, onCancel }: RaidOrchest
       );
       
       // Update player stats
-      updatePlayerStats({
+      const raidResult: RaidResult = {
         victory: true,
         damageDealt: totalDamageDealt + totalDamage,
         rounds: totalRounds + 1,
@@ -112,7 +114,8 @@ export function RaidOrchestrator({ boss, onRaidComplete, onCancel }: RaidOrchest
         placement,
         bossName: boss.name,
         timestamp: new Date()
-      });
+      };
+      updateAfterRaid(raidResult);
       
       setPhase('victory');
     } else {
@@ -127,7 +130,7 @@ export function RaidOrchestrator({ boss, onRaidComplete, onCancel }: RaidOrchest
       
       setPhase('result');
     }
-  }, [boss.timeLimit, boss.shield, boss.name, totalDamageDealt, totalRounds]);
+  }, [boss.timeLimit, boss.shield, boss.name, totalDamageDealt, totalRounds, updateAfterRaid]);
 
   const handleResultContinue = useCallback(() => {
     setPhase('lobby');

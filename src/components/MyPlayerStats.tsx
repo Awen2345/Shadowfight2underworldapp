@@ -12,44 +12,42 @@ import {
   TrendingUp,
   Users,
   Star,
-  Flame
+  Flame,
+  Loader2
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { MedalsModal } from './MedalsModal';
 import type { Player } from '../lib/mockData';
 import { PlayerLevelBadge } from './PlayerLevelBadge';
-import { getPlayerStats, getWinRate } from '../lib/playerStatsData';
-import { getRaidsToday } from '../lib/playerEquipment';
+import { usePlayerStats } from '../lib/hooks/usePlayerStats';
+import { useGameContext } from '../lib/context/GameContext';
 
 export function MyPlayerStats() {
   const [showMedals, setShowMedals] = useState(false);
-  const [playerStats, setPlayerStats] = useState(getPlayerStats());
-  const [raidsToday, setRaidsToday] = useState(getRaidsToday());
+  const { stats, loading, winRate, avgDamagePerRound, raidsToday } = usePlayerStats();
+  const { backendConnected } = useGameContext();
 
-  // Refresh stats when component mounts or comes into view
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setPlayerStats(getPlayerStats());
-      setRaidsToday(getRaidsToday());
-    }, 1000); // Update every second
+  // Show loading state
+  if (loading || !stats) {
+    return (
+      <div className="flex justify-center items-center min-h-[400px]">
+        <Loader2 className="size-8 animate-spin text-amber-500" />
+      </div>
+    );
+  }
 
-    return () => clearInterval(interval);
-  }, []);
-
-  // Current player data (mockup)
+  // Current player data
   const myPlayer: Player = {
     id: 'player-me',
     username: 'Shadow_Fighter_1000',
-    rating: playerStats.rating,
+    rating: stats.rating,
     clan: 'Shadow Warriors',
     clanTag: '[SHA]',
-    bestRatingPerSeason: playerStats.bestRating,
-    avgDamagePerRound: Math.floor(
-      playerStats.totalRounds > 0 ? (playerStats.totalDamage / playerStats.totalRounds) * 10 : 0
-    ),
-    totalRaids: playerStats.totalRaids,
-    victoriousRaids: playerStats.totalVictories,
-    firstPlaces: playerStats.firstPlaceFinishes,
+    bestRatingPerSeason: stats.bestRating,
+    avgDamagePerRound: Math.floor(avgDamagePerRound),
+    totalRaids: stats.totalRaids,
+    victoriousRaids: stats.totalVictories,
+    firstPlaces: stats.firstPlaceFinishes,
     lastPresence: 'Online',
     equipment: {
       weapon: 'Dragon Sword',
@@ -65,8 +63,6 @@ export function MyPlayerStats() {
     ],
     seasonBanner: 'silver'
   };
-
-  const winRate = getWinRate().toFixed(1);
 
   return (
     <>
@@ -93,8 +89,8 @@ export function MyPlayerStats() {
                 </div>
                 <div className="mb-2">
                   <PlayerLevelBadge 
-                    rating={playerStats.rating} 
-                    level={playerStats.level} 
+                    rating={stats.rating} 
+                    level={stats.level} 
                     showProgress={true}
                     size="md"
                   />
@@ -112,7 +108,7 @@ export function MyPlayerStats() {
               <div className="text-amber-500">{myPlayer.rating.toLocaleString()}</div>
               <div className="text-green-400 text-sm flex items-center justify-end gap-1 mt-1">
                 <TrendingUp className="size-3" />
-                <span>Level {playerStats.level}</span>
+                <span>Level {stats.level}</span>
               </div>
             </div>
           </div>

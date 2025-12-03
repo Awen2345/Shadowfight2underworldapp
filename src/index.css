@@ -186,6 +186,7 @@
     --radius-xs: .125rem;
     --radius-2xl: 1rem;
     --drop-shadow-2xl: 0 25px 25px #00000026;
+    --animate-spin: spin 1s linear infinite;
     --animate-pulse: pulse 2s cubic-bezier(.4, 0, .6, 1) infinite;
     --blur-sm: 8px;
     --blur-3xl: 64px;
@@ -1011,6 +1012,10 @@
     max-height: 520px;
   }
 
+  .min-h-\[400px\] {
+    min-height: 400px;
+  }
+
   .min-h-screen {
     min-height: 100vh;
   }
@@ -1157,6 +1162,10 @@
 
   .animate-pulse {
     animation: var(--animate-pulse);
+  }
+
+  .animate-spin {
+    animation: var(--animate-spin);
   }
 
   .cursor-not-allowed {
@@ -5505,6 +5514,12 @@ html {
   syntax: "*";
   inherits: false;
   initial-value: 1;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes pulse {
