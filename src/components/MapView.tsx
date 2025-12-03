@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
@@ -8,15 +8,32 @@ import { getItemById } from '../lib/itemsData';
 import { getInventoryItem, hasEnoughItems, removeInventoryItem } from '../lib/inventoryData';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
 import { RaidOrchestrator } from './RaidOrchestrator';
+import { getPlayerStats, getWinRate } from '../lib/playerStatsData';
+import { getRaidsToday } from '../lib/playerEquipment';
 
 export function MapView() {
   const [selectedTier, setSelectedTier] = useState(1);
   const [selectedBoss, setSelectedBoss] = useState<Boss | null>(null);
   const [raidBoss, setRaidBoss] = useState<Boss | null>(null);
   const [keysCount, setKeysCount] = useState(getInventoryItem('steel-keys'));
+  const [playerStats, setPlayerStats] = useState(getPlayerStats());
+  const [raidsToday, setRaidsToday] = useState(getRaidsToday());
+  const [winRate, setWinRate] = useState(getWinRate());
+
+  // Update stats in real-time
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPlayerStats(getPlayerStats());
+      setRaidsToday(getRaidsToday());
+      setWinRate(getWinRate());
+      setKeysCount(getInventoryItem('steel-keys'));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const tierBosses = getTierBosses(selectedTier);
-  const playerDan = 10; // Current player's Dan level - Updated to 10
+  const playerDan = playerStats.level; // Use actual player level from stats
 
   const getTierColor = (tier: number) => {
     switch (tier) {
@@ -81,7 +98,7 @@ export function MapView() {
                 <div className="text-amber-500 flex items-center gap-2">
                   <span className="line-through text-slate-500">5</span>
                   <span>→</span>
-                  <span className="text-xl">10</span>
+                  <span className="text-xl">{playerDan}</span>
                 </div>
               </div>
             </div>
@@ -94,7 +111,7 @@ export function MapView() {
               </div>
               <div>
                 <div className="text-slate-400 text-sm">Raids Today</div>
-                <div className="text-red-400">0 / 10</div>
+                <div className="text-red-400">{raidsToday} / 10</div>
               </div>
             </div>
           </Card>
@@ -106,7 +123,7 @@ export function MapView() {
               </div>
               <div>
                 <div className="text-slate-400 text-sm">Win Rate</div>
-                <div className="text-green-400">78.5%</div>
+                <div className="text-green-400">{winRate.toFixed(1)}%</div>
               </div>
             </div>
           </Card>

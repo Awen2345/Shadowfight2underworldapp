@@ -7,6 +7,7 @@ import { ResultScreen } from './ResultScreen';
 import { VictoryResultScreen } from './VictoryResultScreen';
 import { RewardScreen } from './RewardScreen';
 import { updatePlayerStats, calculateRatingGain } from '../lib/playerStatsData';
+import { incrementRaidsToday } from '../lib/playerEquipment';
 
 type RaidPhase = 'matchmaking' | 'lobby' | 'battle' | 'result' | 'victory' | 'reward' | 'defeat';
 
@@ -59,6 +60,8 @@ export function RaidOrchestrator({ boss, onRaidComplete, onCancel }: RaidOrchest
   const handleMatchmakingComplete = useCallback((foundPlayers: RaidPlayer[]) => {
     setPlayers(foundPlayers);
     setPhase('lobby');
+    // Increment raids today when entering lobby
+    incrementRaidsToday();
   }, []);
 
   const handleStartBattle = useCallback((charge: string | null, elixir: string | null) => {

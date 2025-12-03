@@ -11,21 +11,29 @@ import {
   Award,
   TrendingUp,
   Users,
-  Star
+  Star,
+  Flame
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { MedalsModal } from './MedalsModal';
 import type { Player } from '../lib/mockData';
 import { PlayerLevelBadge } from './PlayerLevelBadge';
-import { getPlayerStats } from '../lib/playerStatsData';
+import { getPlayerStats, getWinRate } from '../lib/playerStatsData';
+import { getRaidsToday } from '../lib/playerEquipment';
 
 export function MyPlayerStats() {
   const [showMedals, setShowMedals] = useState(false);
   const [playerStats, setPlayerStats] = useState(getPlayerStats());
+  const [raidsToday, setRaidsToday] = useState(getRaidsToday());
 
   // Refresh stats when component mounts or comes into view
   useEffect(() => {
-    setPlayerStats(getPlayerStats());
+    const interval = setInterval(() => {
+      setPlayerStats(getPlayerStats());
+      setRaidsToday(getRaidsToday());
+    }, 1000); // Update every second
+
+    return () => clearInterval(interval);
   }, []);
 
   // Current player data (mockup)
@@ -58,9 +66,7 @@ export function MyPlayerStats() {
     seasonBanner: 'silver'
   };
 
-  const winRate = playerStats.totalRaids > 0 
-    ? ((playerStats.totalVictories / playerStats.totalRaids) * 100).toFixed(1)
-    : '0.0';
+  const winRate = getWinRate().toFixed(1);
 
   return (
     <>
@@ -169,6 +175,15 @@ export function MyPlayerStats() {
                 Combat Statistics
               </h3>
               <div className="grid grid-cols-2 gap-3">
+                {/* Raids Today - NEW */}
+                <div className="p-3 bg-gradient-to-br from-orange-500/10 to-red-500/10 rounded border border-orange-500/30">
+                  <div className="flex items-center gap-2 text-slate-400 text-sm mb-1">
+                    <Flame className="size-3 text-orange-400" />
+                    Raids Today
+                  </div>
+                  <div className="text-orange-400">{raidsToday}</div>
+                </div>
+
                 <div className="p-3 bg-slate-700/30 rounded border border-slate-600">
                   <div className="flex items-center gap-2 text-slate-400 text-sm mb-1">
                     <TrendingUp className="size-3" />
@@ -201,15 +216,15 @@ export function MyPlayerStats() {
                   <div className="text-green-400">{myPlayer.victoriousRaids.toLocaleString()}</div>
                 </div>
 
-                <div className="p-3 bg-slate-700/30 rounded border border-slate-600">
+                <div className="p-3 bg-gradient-to-br from-blue-500/10 to-cyan-500/10 rounded border border-blue-500/30">
                   <div className="flex items-center gap-2 text-slate-400 text-sm mb-1">
-                    <Target className="size-3" />
+                    <Target className="size-3 text-blue-400" />
                     Win rate
                   </div>
                   <div className="text-blue-400">{winRate}%</div>
                 </div>
 
-                <div className="p-3 bg-slate-700/30 rounded border border-slate-600">
+                <div className="p-3 bg-slate-700/30 rounded border border-slate-600 col-span-2">
                   <div className="flex items-center gap-2 text-slate-400 text-sm mb-1">
                     <Award className="size-3" />
                     First places

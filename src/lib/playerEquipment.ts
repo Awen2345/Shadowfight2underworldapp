@@ -1,4 +1,5 @@
 import { Equipment } from './equipmentData';
+import { getPlayerStats } from './playerStatsData';
 
 export interface EquippedItems {
   weapon: string | null;
@@ -44,8 +45,35 @@ export const ownedEquipment: OwnedEquipment[] = [
 export const upgradeQueue: UpgradeQueue[] = [];
 
 // Player level (for equipment requirements)
+// Now synced with playerStatsData for raids/wins
 export let playerLevel = 52; // Current player level - MAX LEVEL
 export const MAX_PLAYER_LEVEL = 52; // Max level in Shadow Fight 2
+
+// Track raids today (resets daily)
+const RAIDS_TODAY_KEY = 'raidsToday';
+const LAST_RAID_DATE_KEY = 'lastRaidDate';
+
+export const getRaidsToday = (): number => {
+  const today = new Date().toDateString();
+  const lastRaidDate = localStorage.getItem(LAST_RAID_DATE_KEY);
+  
+  // Reset if it's a new day
+  if (lastRaidDate !== today) {
+    localStorage.setItem(RAIDS_TODAY_KEY, '0');
+    localStorage.setItem(LAST_RAID_DATE_KEY, today);
+    return 0;
+  }
+  
+  return parseInt(localStorage.getItem(RAIDS_TODAY_KEY) || '0');
+};
+
+export const incrementRaidsToday = (): void => {
+  const today = new Date().toDateString();
+  localStorage.setItem(LAST_RAID_DATE_KEY, today);
+  
+  const current = getRaidsToday();
+  localStorage.setItem(RAIDS_TODAY_KEY, (current + 1).toString());
+};
 
 export const setPlayerLevel = (level: number) => {
   playerLevel = Math.min(level, MAX_PLAYER_LEVEL);

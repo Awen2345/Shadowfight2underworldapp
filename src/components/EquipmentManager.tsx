@@ -72,6 +72,22 @@ export function EquipmentManager({ onClose }: EquipmentManagerProps) {
   const playerLevel = getPlayerLevel();
   const maxLevel = getMaxPlayerLevel();
 
+  // Auto-refresh for upgrade timers - MOVED BEFORE CONDITIONAL RETURNS
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRefreshKey(prev => prev + 1);
+      
+      // Check for completed upgrades
+      ownedEquipment.forEach(eq => {
+        if (eq.isUpgrading && eq.upgradeEndTime && Date.now() >= eq.upgradeEndTime) {
+          completeUpgrade(eq.equipmentId);
+        }
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   // Show combat simulator
   if (showCombatSimulator) {
     return <CombatSimulator onClose={() => {
@@ -87,22 +103,6 @@ export function EquipmentManager({ onClose }: EquipmentManagerProps) {
       setRefreshKey(prev => prev + 1);
     }} />;
   }
-
-  // Auto-refresh for upgrade timers
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setRefreshKey(prev => prev + 1);
-      
-      // Check for completed upgrades
-      ownedEquipment.forEach(eq => {
-        if (eq.isUpgrading && eq.upgradeEndTime && Date.now() >= eq.upgradeEndTime) {
-          completeUpgrade(eq.equipmentId);
-        }
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, []);
 
   const handleLevelUp = () => {
     if (playerLevel >= maxLevel) {
