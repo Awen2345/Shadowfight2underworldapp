@@ -1,16 +1,54 @@
 import { useState } from 'react';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
-import { Trophy, Medal, Award, Clock } from 'lucide-react';
-import { mockPlayers } from '../lib/mockData';
+import { Trophy, Medal, Award, Clock, Loader2 } from 'lucide-react';
 import { PlayerStatsModal } from './PlayerStatsModal';
 import type { Player } from '../lib/mockData';
+import { useLeaderboard } from '../lib/hooks/useLeaderboard';
 
 export function TopPlayersRanking() {
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+  const { players, loading, error } = useLeaderboard(20);
   
-  // Only show top 20 players
-  const top20Players = mockPlayers.slice(0, 20);
+  // Loading state
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[400px]">
+        <Loader2 className="size-8 animate-spin text-amber-500" />
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <Card className="bg-red-900/20 border-red-500/30 p-6">
+        <p className="text-red-400 text-center">Failed to load top players. Using cached data.</p>
+      </Card>
+    );
+  }
+
+  // Convert API data to Player format
+  const top20Players: Player[] = players.slice(0, 20).map((apiPlayer, index) => ({
+    id: apiPlayer.id,
+    username: apiPlayer.username,
+    rating: apiPlayer.rating,
+    clan: apiPlayer.clan_name || undefined,
+    clanTag: apiPlayer.clan_tag || undefined,
+    bestRatingPerSeason: apiPlayer.best_rating || apiPlayer.rating,
+    avgDamagePerRound: Math.floor(parseFloat(apiPlayer.avg_damage_per_round || '0')),
+    totalRaids: apiPlayer.total_raids || 0,
+    victoriousRaids: apiPlayer.total_victories || 0,
+    firstPlaces: apiPlayer.first_place_finishes || 0,
+    lastPresence: apiPlayer.last_presence || 'Unknown',
+    equipment: {
+      weapon: 'Unknown',
+      armor: 'Unknown',
+      helm: 'Unknown'
+    },
+    medals: [],
+    seasonBanner: index < 10 ? 'gold' : index < 100 ? 'silver' : undefined
+  }));
 
   const getRewardIcon = (rank: number) => {
     if (rank === 1) return <Trophy className="size-6 text-amber-400" />;

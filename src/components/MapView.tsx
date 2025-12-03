@@ -5,35 +5,28 @@ import { Button } from './ui/button';
 import { Skull, Swords, Lock, Star, MapPin, Clock, Users, Shield as ShieldIcon, Flame, Sparkles, Key } from 'lucide-react';
 import { bosses, getTierBosses, type Boss } from '../lib/bossData';
 import { getItemById } from '../lib/itemsData';
-import { getInventoryItem, hasEnoughItems, removeInventoryItem } from '../lib/inventoryData';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
 import { RaidOrchestrator } from './RaidOrchestrator';
-import { getPlayerStats, getWinRate } from '../lib/playerStatsData';
-import { getRaidsToday } from '../lib/playerEquipment';
+import { usePlayerStats } from '../lib/hooks/usePlayerStats';
+import { useInventory } from '../lib/hooks/useInventory';
 
 export function MapView() {
   const [selectedTier, setSelectedTier] = useState(1);
   const [selectedBoss, setSelectedBoss] = useState<Boss | null>(null);
   const [raidBoss, setRaidBoss] = useState<Boss | null>(null);
-  const [keysCount, setKeysCount] = useState(getInventoryItem('steel-keys'));
-  const [playerStats, setPlayerStats] = useState(getPlayerStats());
-  const [raidsToday, setRaidsToday] = useState(getRaidsToday());
-  const [winRate, setWinRate] = useState(getWinRate());
-
-  // Update stats in real-time
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setPlayerStats(getPlayerStats());
-      setRaidsToday(getRaidsToday());
-      setWinRate(getWinRate());
-      setKeysCount(getInventoryItem('steel-keys'));
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, []);
+  
+  const { stats, winRate, raidsToday } = usePlayerStats();
+  const { getItemQuantity, removeItem } = useInventory();
+  
+  const keysCount = getItemQuantity('steel-keys');
+  const playerStats = stats || { level: 1, rating: 0 };
 
   const tierBosses = getTierBosses(selectedTier);
   const playerDan = playerStats.level; // Use actual player level from stats
+
+  const hasEnoughItems = (itemId: string, quantity: number) => {
+    return getItemQuantity(itemId) >= quantity;
+  };
 
   const getTierColor = (tier: number) => {
     switch (tier) {
@@ -62,8 +55,8 @@ export function MapView() {
   const handleStartRaid = () => {
     if (selectedBoss && hasEnoughItems(selectedBoss.keyRequired, selectedBoss.keysPerEntry)) {
       // Deduct keys
-      removeInventoryItem(selectedBoss.keyRequired, selectedBoss.keysPerEntry);
-      setKeysCount(getInventoryItem('steel-keys'));
+      removeItem(selectedBoss.keyRequired, selectedBoss.keysPerEntry);
+      setKeysCount(getItemQuantity('steel-keys'));
       
       // Start raid
       setSelectedBoss(null);
@@ -73,7 +66,7 @@ export function MapView() {
 
   const handleRaidComplete = () => {
     // Refresh keys count when returning from raid (rewards may have been added)
-    setKeysCount(getInventoryItem('steel-keys'));
+    setKeysCount(getItemQuantity('steel-keys'));
     setRaidBoss(null);
   };
 
@@ -311,7 +304,7 @@ export function MapView() {
                   </div>
                   <div className="text-right">
                     <div className={`${hasEnoughItems(selectedBoss.keyRequired, selectedBoss.keysPerEntry) ? 'text-green-400' : 'text-red-400'}`}>
-                      {getInventoryItem(selectedBoss.keyRequired)} / {selectedBoss.keysPerEntry}
+                      {getItemQuantity(selectedBoss.keyRequired)} / {selectedBoss.keysPerEntry}
                     </div>
                     {hasEnoughItems(selectedBoss.keyRequired, selectedBoss.keysPerEntry) ? (
                       <Badge className="bg-green-500 text-white text-xs mt-1">Available</Badge>

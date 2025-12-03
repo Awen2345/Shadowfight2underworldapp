@@ -16,10 +16,11 @@ import {
   Zap,
   Sparkles,
   Trophy,
-  Gift
+  Gift,
+  Loader2
 } from 'lucide-react';
 import { motion } from 'motion/react';
-import { getInventoryItem, addInventoryItem, removeInventoryItem } from '../lib/inventoryData';
+import { useInventory } from '../lib/hooks/useInventory';
 import { toast } from 'sonner';
 import { ChestOpening, ChestType, ChestReward } from './ChestOpening';
 
@@ -40,8 +41,18 @@ interface ShopItem {
 export function ShopView() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [openingChest, setOpeningChest] = useState<ChestType | null>(null);
-  const gemsCount = getInventoryItem('verified-gems');
-  const keysCount = getInventoryItem('steel-keys');
+  const { getItemQuantity, addItem, removeItem, loading } = useInventory();
+  
+  const gemsCount = getItemQuantity('verified-gems');
+  const keysCount = getItemQuantity('steel-keys');
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[400px]">
+        <Loader2 className="size-8 animate-spin text-amber-500" />
+      </div>
+    );
+  }
 
   const shopItems: ShopItem[] = [
     // Keys Section
@@ -264,12 +275,12 @@ export function ShopView() {
   ];
 
   const handlePurchase = (item: ShopItem) => {
-    const currentGems = getInventoryItem('verified-gems');
+    const currentGems = getItemQuantity('verified-gems');
 
     if (item.currency === 'gems') {
       if (currentGems >= item.price) {
         // Deduct gems
-        removeInventoryItem('verified-gems', item.price);
+        removeItem('verified-gems', item.price);
         
         // Handle chest opening
         if (item.id.includes('chest')) {
@@ -277,16 +288,16 @@ export function ShopView() {
         } else {
           // Add purchased item
           if (item.id.includes('keys')) {
-            addInventoryItem('steel-keys', item.quantity);
+            addItem('steel-keys', item.quantity);
           } else if (item.id.includes('elixir')) {
-            addInventoryItem(item.id.replace('elixir-', ''), item.quantity);
+            addItem(item.id.replace('elixir-', ''), item.quantity);
           } else if (item.id.includes('charge')) {
             const chargeType = item.id.includes('minor') ? 'minor-charge' : 
                               item.id.includes('medium') ? 'medium-charge' : 'large-charge';
-            addInventoryItem(chargeType, item.quantity);
+            addItem(chargeType, item.quantity);
           } else if (item.id.includes('shard')) {
             const shardType = item.id.replace('shard-', '') + '-shards';
-            addInventoryItem(shardType, item.quantity);
+            addItem(shardType, item.quantity);
           }
           toast.success(`Purchased ${item.name}!`);
         }
@@ -301,7 +312,7 @@ export function ShopView() {
   const handleChestRewards = (rewards: ChestReward[]) => {
     // Add all rewards to inventory
     rewards.forEach(reward => {
-      addInventoryItem(reward.itemId, reward.quantity);
+      addItem(reward.itemId, reward.quantity);
     });
     
     setRefreshKey(prev => prev + 1);

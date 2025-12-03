@@ -1,9 +1,11 @@
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
-import { Trophy, Medal, Award, Users, Swords, Target } from 'lucide-react';
-import { mockClans } from '../lib/mockData';
+import { Trophy, Medal, Award, Users, Swords, Target, Loader2 } from 'lucide-react';
+import { useLeaderboard } from '../lib/hooks/useLeaderboard';
 
 export function ClanLeaderboard() {
+  const { clans, loading, error } = useLeaderboard(100);
+
   const getRewardIcon = (rank: number) => {
     if (rank === 1) return <Trophy className="size-5 text-amber-400" />;
     if (rank === 2) return <Medal className="size-5 text-slate-300" />;
@@ -17,6 +19,24 @@ export function ClanLeaderboard() {
     if (rank === 3) return <Badge className="bg-amber-700 text-white">Normal Chest</Badge>;
     return null;
   };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[400px]">
+        <Loader2 className="size-8 animate-spin text-amber-500" />
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <Card className="bg-red-900/20 border-red-500/30 p-6">
+        <p className="text-red-400 text-center">Failed to load clan leaderboard. Using cached data.</p>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-2">
@@ -49,7 +69,7 @@ export function ClanLeaderboard() {
       </Card>
 
       {/* Clan List */}
-      {mockClans.map((clan, index) => {
+      {clans.map((clan, index) => {
         const rank = index + 1;
         return (
           <Card

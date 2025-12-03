@@ -15,10 +15,7 @@ import {
   PromoReward,
 } from "./components/PromocodePopup";
 import { EquipmentManager } from "./components/EquipmentManager";
-import {
-  getInventoryItem,
-  addInventoryItem,
-} from "./lib/inventoryData";
+import { useInventory } from "./lib/hooks/useInventory";
 import { Key, Gift } from "lucide-react";
 
 export type Page =
@@ -31,61 +28,42 @@ export type Page =
   | "shop"
   | "equipment";
 
-export default function App() {
+function AppContent() {
   const [currentPage, setCurrentPage] = useState<Page>("map");
-  const [showPromocodePopup, setShowPromocodePopup] =
-    useState(false);
-  const [keysCount, setKeysCount] = useState(
-    getInventoryItem("steel-keys"),
-  );
-  const [gemsCount, setGemsCount] = useState(
-    getInventoryItem("verified-gems"),
-  );
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
-
-  // Periodic inventory update
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setKeysCount(getInventoryItem("steel-keys"));
-      setGemsCount(getInventoryItem("verified-gems"));
-    }, 500); // Update every 500ms
-
-    return () => clearInterval(interval);
-  }, []);
+  const [showPromocodePopup, setShowPromocodePopup] = useState(false);
+  const { getItemQuantity, addItem } = useInventory();
+  
+  const keysCount = getItemQuantity("steel-keys");
+  const gemsCount = getItemQuantity("verified-gems");
 
   const handlePromoRedeemSuccess = (rewards: PromoReward) => {
     // Add rewards to inventory
     if (rewards.gems) {
-      addInventoryItem("verified-gems", rewards.gems);
-      setGemsCount(getInventoryItem("verified-gems"));
+      addItem("verified-gems", rewards.gems);
     }
     if (rewards.keys) {
-      addInventoryItem("steel-keys", rewards.keys);
-      setKeysCount(getInventoryItem("steel-keys"));
+      addItem("steel-keys", rewards.keys);
     }
     if (rewards.minorCharge) {
-      addInventoryItem("minor-charge", rewards.minorCharge);
+      addItem("minor-charge", rewards.minorCharge);
     }
     if (rewards.mediumCharge) {
-      addInventoryItem("medium-charge", rewards.mediumCharge);
+      addItem("medium-charge", rewards.mediumCharge);
     }
     if (rewards.largeCharge) {
-      addInventoryItem("large-charge", rewards.largeCharge);
+      addItem("large-charge", rewards.largeCharge);
     }
     if (rewards.elixirs) {
       rewards.elixirs.forEach((elixir) => {
-        addInventoryItem(elixir.id, elixir.quantity);
+        addItem(elixir.id, elixir.quantity);
       });
     }
-
-    // Trigger refresh
-    setRefreshTrigger((prev) => prev + 1);
   };
 
   const renderPage = () => {
     switch (currentPage) {
       case "map":
-        return <MapView key={refreshTrigger} />;
+        return <MapView />;
       case "rewards":
         return <SeasonRewards />;
       case "ranking":
@@ -95,13 +73,12 @@ export default function App() {
       case "clans":
         return <ClansView />;
       case "shop":
-        return <ShopView key={refreshTrigger} />;
+        return <ShopView />;
       case "gems":
         return <GemsView />;
       case "equipment":
         return (
           <EquipmentManager
-            key={refreshTrigger}
             onClose={() => setCurrentPage("map")}
           />
         );
@@ -161,4 +138,8 @@ export default function App() {
       </div>
     </GameProvider>
   );
+}
+
+export default function App() {
+  return <AppContent />;
 }
