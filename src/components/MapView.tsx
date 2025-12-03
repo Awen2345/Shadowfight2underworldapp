@@ -56,7 +56,6 @@ export function MapView() {
     if (selectedBoss && hasEnoughItems(selectedBoss.keyRequired, selectedBoss.keysPerEntry)) {
       // Deduct keys
       removeItem(selectedBoss.keyRequired, selectedBoss.keysPerEntry);
-      setKeysCount(getItemQuantity('steel-keys'));
       
       // Start raid
       setSelectedBoss(null);
@@ -65,8 +64,7 @@ export function MapView() {
   };
 
   const handleRaidComplete = () => {
-    // Refresh keys count when returning from raid (rewards may have been added)
-    setKeysCount(getItemQuantity('steel-keys'));
+    // Refresh will happen automatically via useInventory hook
     setRaidBoss(null);
   };
 

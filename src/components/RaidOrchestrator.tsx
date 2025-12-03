@@ -62,8 +62,6 @@ export function RaidOrchestrator({ boss, onRaidComplete, onCancel }: RaidOrchest
   const handleMatchmakingComplete = useCallback((foundPlayers: RaidPlayer[]) => {
     setPlayers(foundPlayers);
     setPhase('lobby');
-    // Increment raids today when entering lobby
-    incrementRaidsToday();
   }, []);
 
   const handleStartBattle = useCallback((charge: string | null, elixir: string | null) => {
